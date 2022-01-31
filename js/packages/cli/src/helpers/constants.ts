@@ -113,6 +113,7 @@ export const EXTENSION_PNG = '.png';
 export const EXTENSION_JPG = '.jpg';
 export const EXTENSION_GIF = '.gif';
 export const EXTENSION_JSON = '.json';
+export const EXTENSION_TXT = '.txt';
 
 type Cluster = {
   name: string;

@@ -43,13 +43,13 @@ import { createGenerativeArt } from './commands/createArt';
 import { withdrawV2 } from './commands/withdraw';
 import { updateFromCache } from './commands/updateFromCache';
 import { StorageType } from './helpers/storage-type';
-import { getType } from 'mime';
+// import { getType } from 'mime';
 program.version('0.0.2');
-const supportedImageTypes = {
-  'image/png': 1,
-  'image/gif': 1,
-  'image/jpeg': 1,
-};
+// const supportedImageTypes = {
+//   'image/png': 1,
+//   'image/gif': 1,
+//   'image/jpeg': 1,
+// };
 
 if (!fs.existsSync(CACHE_PATH)) {
   fs.mkdirSync(CACHE_PATH);
@@ -147,18 +147,18 @@ programCommand('upload')
         )}. Got: ${storage}`,
       );
     }
-    const ipfsCredentials = {
-      projectId: ipfsInfuraProjectId,
-      secretKey: ipfsInfuraSecret,
-    };
+    // const ipfsCredentials = {
+    //   projectId: ipfsInfuraProjectId,
+    //   secretKey: ipfsInfuraSecret,
+    // };
 
-    let imageFileCount = 0;
+    let txtFileCount = 0;
     let jsonFileCount = 0;
 
-    // Filter out any non-supported file types and find the JSON vs Image file count
+    // Filter out any non-supported file types and find the JSON vs txt file count
     const supportedFiles = files.filter(it => {
-      if (supportedImageTypes[getType(it)]) {
-        imageFileCount++;
+      if (it.endsWith(".txt")) {
+        txtFileCount++;
       } else if (it.endsWith(EXTENSION_JSON)) {
         jsonFileCount++;
       } else {
@@ -169,20 +169,20 @@ programCommand('upload')
       return true;
     });
 
-    if (imageFileCount !== jsonFileCount) {
+    if (txtFileCount !== jsonFileCount) {
       throw new Error(
-        `number of img files (${imageFileCount}) is different than the number of json files (${jsonFileCount})`,
+        `number of txt files (${txtFileCount}) is different than the number of json files (${jsonFileCount})`,
       );
     }
 
-    const elemCount = number ? number : imageFileCount;
-    if (elemCount < imageFileCount) {
+    const elemCount = number ? number : txtFileCount;
+    if (elemCount < txtFileCount) {
       throw new Error(
-        `max number (${elemCount}) cannot be smaller than the number of elements in the source folder (${imageFileCount})`,
+        `max number (${elemCount}) cannot be smaller than the number of elements in the source folder (${txtFileCount})`,
       );
     }
 
-    log.info(`Beginning the upload for ${elemCount} (img+json) pairs`);
+    log.info(`Beginning the upload for ${elemCount} (txt+json) pairs`);
 
     const startMs = Date.now();
     log.info('started at: ' + startMs.toString());
@@ -197,7 +197,7 @@ programCommand('upload')
         retainAuthority,
         mutable,
         nftStorageKey,
-        ipfsCredentials,
+        //ipfsCredentials,
         awsS3Bucket,
         batchSize,
         price,

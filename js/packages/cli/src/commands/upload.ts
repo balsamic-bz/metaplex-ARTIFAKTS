@@ -11,15 +11,16 @@ import fs from 'fs';
 import { BN, Program, web3 } from '@project-serum/anchor';
 
 import { loadCache, saveCache } from '../helpers/cache';
-import { arweaveUpload } from '../helpers/upload/arweave';
+// import { arweaveUpload } from '../helpers/upload/arweave';
 import { makeArweaveBundleUploadGenerator } from '../helpers/upload/arweave-bundle';
-import { awsUpload } from '../helpers/upload/aws';
-import { ipfsCreds, ipfsUpload } from '../helpers/upload/ipfs';
+// import { awsUpload } from '../helpers/upload/aws';
+// import { ipfsCreds, ipfsUpload } from '../helpers/upload/ipfs';
 
 import { StorageType } from '../helpers/storage-type';
 import { AssetKey } from '../types';
 import { chunks } from '../helpers/various';
-import { nftStorageUpload } from '../helpers/upload/nft-storage';
+// import { nftStorageUpload } from '../helpers/upload/nft-storage';
+import { EXTENSION_TXT } from '../helpers/constants';
 
 export async function uploadV2({
   files,
@@ -29,9 +30,9 @@ export async function uploadV2({
   storage,
   retainAuthority,
   mutable,
-  nftStorageKey,
-  ipfsCredentials,
-  awsS3Bucket,
+  // nftStorageKey,
+  // ipfsCredentials,
+  // awsS3Bucket,
   batchSize,
   price,
   treasuryWallet,
@@ -54,7 +55,7 @@ export async function uploadV2({
   retainAuthority: boolean;
   mutable: boolean;
   nftStorageKey: string;
-  ipfsCredentials: ipfsCreds;
+  //ipfsCredentials: ipfsCreds;
   awsS3Bucket: string;
   batchSize: number;
   price: BN;
@@ -220,17 +221,19 @@ export async function uploadV2({
           async allIndexesInSlice => {
             for (let i = 0; i < allIndexesInSlice.length; i++) {
               const assetKey = dedupedAssetKeys[allIndexesInSlice[i]];
-              const image = path.join(
-                dirname,
-                `${assetKey.index}${assetKey.mediaExt}`,
-              );
+              // const image = path.join(
+              //   dirname,
+              //   `${assetKey.index}${assetKey.mediaExt}`,
+              // );
+              const link = fs.readFileSync(dirname + "/" + assetKey.index + EXTENSION_TXT ).toString();
+              console.log("read link: " + link)
               const manifest = getAssetManifest(
                 dirname,
                 assetKey.index.includes('json')
                   ? assetKey.index
                   : `${assetKey.index}.json`,
               );
-              const manifestBuffer = Buffer.from(JSON.stringify(manifest));
+              //const manifestBuffer = Buffer.from(JSON.stringify(manifest));
 
               if (
                 allIndexesInSlice[i] >= lastPrinted + tick ||
@@ -240,43 +243,43 @@ export async function uploadV2({
                 log.info(`Processing asset: ${allIndexesInSlice[i]}`);
               }
 
-              let link, imageLink;
-              try {
-                switch (storage) {
-                  case StorageType.NftStorage:
-                    [link, imageLink] = await nftStorageUpload(
-                      nftStorageKey,
-                      image,
-                      manifestBuffer,
-                    );
-                    break;
-                  case StorageType.Ipfs:
-                    [link, imageLink] = await ipfsUpload(
-                      ipfsCredentials,
-                      image,
-                      manifestBuffer,
-                    );
-                    break;
-                  case StorageType.Aws:
-                    [link, imageLink] = await awsUpload(
-                      awsS3Bucket,
-                      image,
-                      manifestBuffer,
-                    );
-                    break;
-                  case StorageType.Arweave:
-                  default:
-                    [link, imageLink] = await arweaveUpload(
-                      walletKeyPair,
-                      anchorProgram,
-                      env,
-                      image,
-                      manifestBuffer,
-                      manifest,
-                      assetKey.index,
-                    );
-                }
-                if (link && imageLink) {
+              // let link, imageLink;
+              // try {
+              //   switch (storage) {
+              //     case StorageType.NftStorage:
+              //       [link, imageLink] = await nftStorageUpload(
+              //         nftStorageKey,
+              //         image,
+              //         manifestBuffer,
+              //       );
+              //       break;
+              //     case StorageType.Ipfs:
+              //       [link, imageLink] = await ipfsUpload(
+              //         ipfsCredentials,
+              //         image,
+              //         manifestBuffer,
+              //       );
+              //       break;
+              //     case StorageType.Aws:
+              //       [link, imageLink] = await awsUpload(
+              //         awsS3Bucket,
+              //         image,
+              //         manifestBuffer,
+              //       );
+              //       break;
+              //     case StorageType.Arweave:
+              //     default:
+              //       [link, imageLink] = await arweaveUpload(
+              //         walletKeyPair,
+              //         anchorProgram,
+              //         env,
+              //         image,
+              //         manifestBuffer,
+              //         manifest,
+              //         assetKey.index,
+              //       );
+              //   }
+                if (link) {
                   log.debug('Updating cache for ', allIndexesInSlice[i]);
                   cacheContent.items[assetKey.index] = {
                     link,
@@ -285,10 +288,10 @@ export async function uploadV2({
                   };
                   saveCache(cacheName, env, cacheContent);
                 }
-              } catch (err) {
-                log.error(`Error uploading file ${assetKey}`, err);
-                i--;
-              }
+              // } catch (err) {
+              //   log.error(`Error uploading file ${assetKey}`, err);
+              //   i--;
+              // }
             }
           },
         ),
@@ -445,7 +448,8 @@ function getAssetManifest(dirname: string, assetKey: string): Manifest {
   const manifest: Manifest = JSON.parse(
     fs.readFileSync(manifestPath).toString(),
   );
-  manifest.image = manifest.image.replace('image', assetIndex);
+  // DONT REPLACE ANY FIELDS IN THE JSON
+  //manifest.image = manifest.image.replace('image', assetIndex);
   // if (manifest.properties?.files?.length > 0) {
   //   manifest.properties.files[0].uri = manifest.properties.files[0]?.uri?.replace(
   //     'image',
@@ -568,7 +572,6 @@ type UploadParams = {
   keypair: string;
   storage: string;
   rpcUrl: string;
-  ipfsCredentials: ipfsCreds;
   awsS3Bucket: string;
   arweaveJwk: string;
   batchSize: number;
@@ -580,8 +583,8 @@ export async function upload({
   keypair,
   storage,
   rpcUrl,
-  ipfsCredentials,
-  awsS3Bucket,
+  //ipfsCredentials,
+  //awsS3Bucket,
   arweaveJwk,
   batchSize,
 }: UploadParams): Promise<void> {
@@ -670,65 +673,65 @@ export async function upload({
           async allIndexesInSlice => {
             for (let i = 0; i < allIndexesInSlice.length; i++) {
               const assetKey = dedupedAssetKeys[i];
-              const image = path.join(
-                dirname,
-                `${assetKey.index}${assetKey.mediaExt}`,
-              );
+              // const image = path.join(
+              //   dirname,
+              //   `${assetKey.index}${assetKey.mediaExt}`,
+              // );
+              const link = fs.readFileSync(dirname + assetKey.index + EXTENSION_TXT ).toString();
               const manifest = getAssetManifest(
                 dirname,
                 assetKey.index.includes('json')
                   ? assetKey.index
                   : `${assetKey.index}.json`,
               );
-              const manifestBuffer = Buffer.from(JSON.stringify(manifest));
+              // const manifestBuffer = Buffer.from(JSON.stringify(manifest));
               if (i >= lastPrinted + tick || i === 0) {
                 lastPrinted = i;
                 log.info(`Processing asset: ${assetKey}`);
               }
 
-              let link, imageLink;
-              try {
-                switch (storage) {
-                  case StorageType.Ipfs:
-                    [link, imageLink] = await ipfsUpload(
-                      ipfsCredentials,
-                      image,
-                      manifestBuffer,
-                    );
-                    break;
-                  case StorageType.Aws:
-                    [link, imageLink] = await awsUpload(
-                      awsS3Bucket,
-                      image,
-                      manifestBuffer,
-                    );
-                    break;
-                  case StorageType.Arweave:
-                  default:
-                    [link, imageLink] = await arweaveUpload(
-                      walletKeyPair,
-                      anchorProgram,
-                      env,
-                      image,
-                      manifestBuffer,
-                      manifest,
-                      i,
-                    );
-                }
-                if (link && imageLink) {
+              // let url;
+              // try {
+              //   switch (storage) {
+              //     case StorageType.Ipfs:
+              //       [link, imageLink] = await ipfsUpload(
+              //         ipfsCredentials,
+              //         image,
+              //         manifestBuffer,
+              //       );
+              //       break;
+              //     case StorageType.Aws:
+              //       [link, imageLink] = await awsUpload(
+              //         awsS3Bucket,
+              //         image,
+              //         manifestBuffer,
+              //       );
+              //       break;
+              //     case StorageType.Arweave:
+              //     default:
+              //       [link, imageLink] = await arweaveUpload(
+              //         walletKeyPair,
+              //         anchorProgram,
+              //         env,
+              //         image,
+              //         manifestBuffer,
+              //         manifest,
+              //         i,
+              //       );
+              //   }
+                if (link) {
                   log.debug('Updating cache for ', assetKey);
                   cache.items[assetKey.index] = {
                     link,
-                    imageLink,
                     name: manifest.name,
                     onChain: false,
                   };
                   saveCache(cacheName, env, cache);
                 }
-              } catch (err) {
-                log.error(`Error uploading file ${assetKey}`, err);
-                throw err;
-              }
+              // } catch (err) {
+              //   log.error(`Error uploading file ${assetKey}`, err);
+              //   throw err;
+              // }
             }
           },
         ),
